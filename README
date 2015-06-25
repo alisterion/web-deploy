@@ -1,0 +1,90 @@
+# Web-deploy
+
+A tool to automatic deployment of web projects (e.g. django based)
+
+
+## Usage
+
+Test files in project
+
+Content of "**fabfile.py**":
+
+```python
+   
+    from fabric.api import env
+    from web_deploy import *
+    from web_deploy.python import *
+    
+
+    def foo(tag=None):
+        env.host_string = 'prod.or.test.example.com'
+        env.use_ssh_config = True
+    
+        project_name = 'my_project'
+        project_root = '/home/user/projects'
+        virtual_env_name = '.virtualenv'
+    
+        db_dump_dir = project_root + '/%s/dumps/' % project_name
+        app_dir = project_root + '/%s/www' % project_name
+        dj_project_dir = app_dir + '/data'
+    
+        project_tree = (
+            project_root + '/%s/public_files/' % project_name,
+            db_dump_dir,
+            app_dir + '1/',
+            app_dir + '1/data/',
+            app_dir + '2/',
+            app_dir + '2/data/',
+        )
+        log_files = (
+            '/var/log/my_project/my_project.log',
+            '/var/log/my_project/celery/out.log',
+        )
+    
+        system = System(
+            project_tree=project_tree,
+            app_dir=app_dir,
+            log_files=log_files,
+            daemons=[
+                Uwsgi(),
+                Nginx(),
+            ]
+        )
+    
+        django_prj = DjangoProjectModule(
+            git=Git(
+                dj_project_dir,
+                project_name,
+                'git@github.com:s.ome-user/my_project.git'
+            ),
+            virtual_env=VirtualEnv(app_dir, virtual_env_name),
+            system=system,
+            db=Postgres(
+                path=db_dump_dir,
+                name='my_project_db',
+                user='my_project_user',
+                password='Gjy16|T7@xv/jz$)P&ta|EQ$Sz',
+            ),
+            py_rq=dj_project_dir + '/my_project/requirements.txt',
+            apt_rq=dj_project_dir + '/my_project/apt-requirements.txt',
+            manage_py=dj_project_dir + '/my_project/manage.py',
+            collect_static=False
+        )
+    
+        project = Project(
+            system=system,
+            modules=[
+                django_prj,
+            ]
+        )
+        project.update(tag)
+
+```
+
+Then you may just say in console something like ```fab foo:deployment``` 
+and you prod/test server will be updated to the last version of **deployment** 
+branch/tag. Or if you will say ```fab foo``` you server will be updated to the 
+last revision of current branch. 
+
+After fetching changes from git will be applied  all migration and restarted all 
+specified daemons (*uwsgi* and *nginx* in example above).

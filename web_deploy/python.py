@@ -1,0 +1,146 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright 2015 Yuriy Gavenchuk aka murminathor
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from .base import LocatedDeployEntity
+from .project import ProjectModule
+
+
+__author__ = 'y.gavenchuk'
+__all__ = ('VirtualEnv', 'PythonProjectModule', 'DjangoProjectModule', )
+
+
+class VirtualEnv(LocatedDeployEntity):
+    __slots__ = ('_v_name', )
+
+    DEFAULT_NAME = '.virtualenv'
+
+    def __init__(self, path, name=DEFAULT_NAME):
+        super(VirtualEnv, self).__init__(path)
+
+        self._v_name = str(name)
+
+    def _activate(self):
+        return 'source "%s"' % self._os.path.join(
+            self.directory, 'bin/activate'
+        )
+
+    @property
+    def directory(self):
+        return self._os.path.join(self._path, self._v_name)
+
+    @property
+    def name(self):
+        return self._v_name
+
+    @property
+    def is_exists(self):
+        return self._files.exists(
+            self._os.path.join(self._path, self.name, 'bin', 'python')
+        )
+
+    def run(self, command):
+        activate_str = 'source "%s"' % self._os.path.join(
+            self.directory, 'bin/activate'
+        )
+
+        cmd_list = command if isinstance(command, (list, tuple)) else [command]
+        with self._api.prefix(activate_str):
+            for cmd in cmd_list:
+                self._api.run(cmd)
+
+    def mk(self):
+        if self.is_exists:
+            return
+
+        with self._api.cd(self._path):
+            self._api.run(
+                '/usr/bin/virtualenv -p /usr/bin/python3.4 "%s"' % self._v_name
+            )
+
+        self.run('pip install -U pip setuptools')
+
+    def install_packages(self, packages_file):
+        self.mk()
+        self.run([
+            'pip install -U pip setuptools',
+            'pip install -r "%s"' % packages_file
+        ])
+
+    @property
+    def python(self):
+        return self._os.path.join(
+            self._path, self._v_name, 'bin/python'
+        )
+
+
+class PythonProjectModule(ProjectModule):
+    __slots__ = ('_v_env', '_sys', '_py_rq', '_apt_rq')
+
+    def __init__(self, git, virtual_env, system, python_rq_file, apt_rq_file):
+        """
+        :param Git git:
+        :param VirtualEnv virtual_env:
+        :param System system:
+        :param str python_rq_file: path to file with python requirement pkg
+        :param str apt_rq_file: path to file with system requirement pkg
+        """
+        super(PythonProjectModule, self).__init__(git)
+        self._v_env = virtual_env
+        self._sys = system
+        self._py_rq = python_rq_file
+        self._apt_rq = apt_rq_file
+
+        self._post_update_hooks = [
+            self.puh_system,
+            self.puh_python,
+        ]
+
+    def puh_system(self):
+        self._sys.install_system_packages(self._apt_rq)
+
+    def puh_python(self):
+        self._v_env.install_packages(self._py_rq)
+
+
+class DjangoProjectModule(PythonProjectModule):
+    __slots__ = ('_manage_py', '_db', )
+
+    def __init__(self, git, virtual_env, system, db, py_rq, apt_rq, manage_py,
+                 collect_static=True):
+        super(DjangoProjectModule, self).__init__(
+            git, virtual_env, system, py_rq, apt_rq
+        )
+        self._manage_py = manage_py
+        self._db = db
+
+        self._post_update_hooks += [
+            self.puh_db_backup,
+            self.puh_migrate,
+        ]
+
+        if collect_static:
+            self._post_update_hooks.append(
+                self.puh_collect_static
+            )
+
+    def puh_db_backup(self):
+        self._db.create_backup()
+
+    def puh_migrate(self):
+        self._v_env.run('"%s" migrate' % self._manage_py)
+
+    def puh_collect_static(self):
+        self._v_env.run('"%s" collectstatic --noinput' % self._manage_py)

@@ -1,0 +1,7 @@
+.idea/*
+build/*
+web_deploy.egg-info/*
+temp/*
+setup.cfg
+*.pyc
+*.pyo
