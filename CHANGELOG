@@ -1,3 +1,0 @@
-v0.0.3
- - Fixed open file in FixtureManager with python 2.x interpreter
- - added a simple test to FixtureManager
