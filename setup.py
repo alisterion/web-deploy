@@ -58,7 +58,7 @@ setup(
         'Operating System :: OS Independent'
     ],
     packages=find_packages(exclude=['tests', 'tests.*']),
-    dependency_links=['git+https://github.com/akaariai/fabric.git@py34', ],
-    install_requires=['Fabric', ],
+    install_requires=['Fabric>=1.10.2', ],
+    dependency_links=['git+https://github.com/akaariai/fabric.git@py34#egg=Fabric-1.10.2', ],
     zip_safe=True
 )

@@ -82,9 +82,18 @@ Content of "**fabfile.py**":
 ```
 
 Then you may just say in console something like ```fab foo:deployment``` 
-and you prod/test server will be updated to the last version of **deployment** 
-branch/tag. Or if you will say ```fab foo``` you server will be updated to the 
+and your prod/test server will be updated to the last version of **deployment** 
+branch/tag. Or if you will say ```fab foo``` your server will be updated to the 
 last revision of current branch. 
 
 After fetching changes from git will be applied  all migration and restarted all 
 specified daemons (*uwsgi* and *nginx* in example above).
+
+
+## Installation notes
+Important! Before install web-deploy package you should manually install fabric for python3.4
+
+```
+    pip install git+https://github.com/akaariai/fabric.git@py34
+    pip install git+https://github.com/ygavenchuk/web-deploy.git
+```

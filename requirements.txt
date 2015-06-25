@@ -1,1 +1,1 @@
-Fabric
+git+https://github.com/akaariai/fabric.git@py34
