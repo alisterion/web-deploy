@@ -48,6 +48,9 @@ class DataBase(LocatedDeployEntity, metaclass=ABCMeta):
             return
 
         bkp_to_remove = sorted(backups)[:-self.backup_count]
+        if not bkp_to_remove:
+            return
+
         cmd = 'rm -- %s' % ' '.join(map(lambda x: '"%s"' % x, bkp_to_remove))
         with self._api.cd(self.path):
             self._api.run(cmd)
