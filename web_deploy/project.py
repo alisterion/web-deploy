@@ -14,24 +14,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .base import DeployEntity
+from .base import LocatedDeployEntity, DeployEntity
 
 
 __author__ = 'y.gavenchuk'
 __all__ = ('Project', 'ProjectModule', )
 
 
-class ProjectModule(DeployEntity):
-    __slots__ = ('_git', '_post_update_hooks', )
+class ProjectModule(LocatedDeployEntity):
+    __slots__ = ('_git', '_post_update_hooks', '_container')
 
-    def __init__(self, git):
-        super(ProjectModule, self).__init__()
+    DEFAULT_CONTAINER_NAME = 'data'
+
+    def __init__(self, path, git, container_name=None):
+        super(ProjectModule, self).__init__(path)
         self._git = git
+        self._git.path = self.path
+        self._container = container_name or self.DEFAULT_CONTAINER_NAME
         self._post_update_hooks = []
 
     @property
     def git(self):
         return self._git
+
+    @LocatedDeployEntity.path.setter
+    def path(self, value):
+        LocatedDeployEntity.path.fset(self, value)
+
+        self._git.path = self._os.path.join(value, self._container)
 
     @property
     def post_update_hooks(self):
@@ -41,6 +51,15 @@ class ProjectModule(DeployEntity):
         for hook in self._post_update_hooks:
             hook()
 
+    def update(self, tag):
+        """
+        Perform module update: pull changes from git and apply all  post
+                               update hooks
+
+        :param str tag: git tag
+        """
+        self.git.update(tag)
+        self.post_update_hndl()
 
 class Project(DeployEntity):
     __slots__ = ('_p_modules', '_sys', )
@@ -56,8 +75,8 @@ class Project(DeployEntity):
 
     def _update_modules(self, tag=None):
         for prj_mod in self._p_modules:
-            prj_mod.git.update(tag)
-            prj_mod.post_update_hndl()
+            prj_mod.path = self._sys.app_directory_inactive
+            prj_mod.update(tag)
 
     def update(self, tag=None):
         self._sys.create_project_tree()

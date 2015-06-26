@@ -89,7 +89,8 @@ class VirtualEnv(LocatedDeployEntity):
 class PythonProjectModule(ProjectModule):
     __slots__ = ('_v_env', '_sys', '_py_rq', '_apt_rq')
 
-    def __init__(self, git, virtual_env, system, python_rq_file, apt_rq_file):
+    def __init__(self, path, git, virtual_env, system, python_rq_file,
+                 apt_rq_file, container_name=None):
         """
         :param Git git:
         :param VirtualEnv virtual_env:
@@ -97,8 +98,9 @@ class PythonProjectModule(ProjectModule):
         :param str python_rq_file: path to file with python requirement pkg
         :param str apt_rq_file: path to file with system requirement pkg
         """
-        super(PythonProjectModule, self).__init__(git)
+        super(PythonProjectModule, self).__init__(path, git, container_name)
         self._v_env = virtual_env
+        self._v_env.path = path
         self._sys = system
         self._py_rq = python_rq_file
         self._apt_rq = apt_rq_file
@@ -107,6 +109,12 @@ class PythonProjectModule(ProjectModule):
             self.puh_system,
             self.puh_python,
         ]
+
+    @ProjectModule.path.setter
+    def path(self, value):
+        ProjectModule.path.fset(self, value)
+
+        self._v_env.path = value
 
     def puh_system(self):
         self._sys.install_system_packages(self._apt_rq)
@@ -118,10 +126,12 @@ class PythonProjectModule(ProjectModule):
 class DjangoProjectModule(PythonProjectModule):
     __slots__ = ('_manage_py', '_db', )
 
-    def __init__(self, git, virtual_env, system, db, py_rq, apt_rq, manage_py,
-                 collect_static=True):
+    def __init__(self, path, git, virtual_env, system, python_rq_file,
+                 apt_rq_file, db, manage_py, collect_static=True,
+                 container_name=None):
         super(DjangoProjectModule, self).__init__(
-            git, virtual_env, system, py_rq, apt_rq
+            path, git, virtual_env, system, python_rq_file, apt_rq_file,
+            container_name
         )
         self._manage_py = manage_py
         self._db = db
