@@ -64,5 +64,5 @@ class Supervisor(Daemon):
     def restart(self):
         self._api.sudo('supervisorctl reread')
         self._api.sudo(
-            'supervisorctl %s restart %s' % (self.name, self._service, )
+            'supervisorctl restart %s' % self._service
         )
