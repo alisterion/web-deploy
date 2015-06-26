@@ -66,9 +66,9 @@ Content of "**fabfile.py**":
                 user='my_project_user',
                 password='Gjy16|T7@xv/jz$)P&ta|EQ$Sz',
             ),
-            python_rq_file=dj_project_dir + '/my_project/requirements.txt',
-            apt_rq_file=dj_project_dir + '/my_project/apt-requirements.txt',
-            manage_py=dj_project_dir + '/my_project/manage.py',
+            python_rq_file='my_project/requirements.txt',
+            apt_rq_file='my_project/apt-requirements.txt',
+            manage_py='my_project/manage.py',
             collect_static=False
         )
     
