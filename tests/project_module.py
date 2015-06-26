@@ -16,4 +16,4 @@ class ProjectModuleTestCase(TestCase):
         pm = ProjectModule(path_before, git)
         pm.path = path_after
 
-        self.assertEqual(pm.path, path_after)
+        self.assertEqual(pm.path, "%s/%s" % (path_after, pm.container))

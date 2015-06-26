@@ -95,8 +95,12 @@ class PythonProjectModule(ProjectModule):
         :param Git git:
         :param VirtualEnv virtual_env:
         :param System system:
-        :param str python_rq_file: path to file with python requirement pkg
+        :param str python_rq_file: path to file with python requirement pkg.
+                                   Note! This should be relative path.
+                                   From module's container
         :param str apt_rq_file: path to file with system requirement pkg
+                                Note! This should be relative path.
+                                From module's container
         """
         super(PythonProjectModule, self).__init__(path, git, container_name)
         self._v_env = virtual_env
@@ -114,13 +118,17 @@ class PythonProjectModule(ProjectModule):
     def path(self, value):
         ProjectModule.path.fset(self, value)
 
-        self._v_env.path = value
+        self._v_env.path = self.path
 
     def puh_system(self):
-        self._sys.install_system_packages(self._apt_rq)
+        self._sys.install_system_packages(
+            self._os.path.join(self.path, self._apt_rq)
+        )
 
     def puh_python(self):
-        self._v_env.install_packages(self._py_rq)
+        self._v_env.install_packages(
+            self._os.path.join(self.path, self._py_rq)
+        )
 
 
 class DjangoProjectModule(PythonProjectModule):
@@ -146,11 +154,15 @@ class DjangoProjectModule(PythonProjectModule):
                 self.puh_collect_static
             )
 
+    @property
+    def manage_py(self):
+        return self._os.path.join(self.path, self._manage_py)
+
     def puh_db_backup(self):
         self._db.create_backup()
 
     def puh_migrate(self):
-        self._v_env.run('"%s" migrate' % self._manage_py)
+        self._v_env.run('"%s" migrate' % self.manage_py)
 
     def puh_collect_static(self):
-        self._v_env.run('"%s" collectstatic --noinput' % self._manage_py)
+        self._v_env.run('"%s" collectstatic --noinput' % self.manage_py)

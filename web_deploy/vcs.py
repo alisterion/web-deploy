@@ -22,13 +22,12 @@ __all__ = ('Git', )
 
 
 class Git(LocatedDeployEntity):
-    __slots__ = ('_name', '_url', '_repo_dir', )
+    __slots__ = ('_name', '_url', )
 
     def __init__(self, path, name, url):
         super(Git, self).__init__(path)
         self._name = name
         self._url = url
-        self._repo_dir = ''
 
     @property
     def _git_cmd(self):
@@ -36,10 +35,7 @@ class Git(LocatedDeployEntity):
 
     @property
     def repository_dir(self):
-        if not self._repo_dir:
-            self._repo_dir = self._os.path.join(self._path, self._name)
-
-        return self._repo_dir
+        return self._os.path.join(self._path, self._name)
 
     @property
     def url(self):

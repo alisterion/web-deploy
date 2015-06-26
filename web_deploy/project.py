@@ -37,11 +37,16 @@ class ProjectModule(LocatedDeployEntity):
     def git(self):
         return self._git
 
+    @property
+    def container(self):
+        return self._container
+
     @LocatedDeployEntity.path.setter
     def path(self, value):
-        LocatedDeployEntity.path.fset(self, value)
+        new_path = self._os.path.join(value, self._container)
+        LocatedDeployEntity.path.fset(self, new_path)
 
-        self._git.path = self._os.path.join(value, self._container)
+        self._git.path = new_path
 
     @property
     def post_update_hooks(self):
