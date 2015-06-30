@@ -14,21 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from unittest import TestCase, mock
-from web_deploy.project import ProjectModule
+from unittest import TestCase
+
+from test_tools import FixtureManager
+
+from web_deploy.settings import SettingsXML
 
 
 __author__ = 'y.gavenchuk'
-__all__ = ('ProjectModuleTestCase', )
+__all__ = ('SettingsTestCase', )
 
 
-class ProjectModuleTestCase(TestCase):
-    def test_setup_path(self):
-        path_before = '/a/b/c'
-        path_after = '/e/f/g'
-        git = mock.MagicMock()
+class SettingsTestCase(TestCase):
+    _config_file = FixtureManager.get_fixture_path('config.xml')
+    _cfg = SettingsXML(_config_file)
 
-        pm = ProjectModule(path_before, git)
-        pm.path = path_after
+    def test_parsed_data_should_be_dict(self):
+        self.assertIsInstance(self._cfg.data, dict)
 
-        self.assertEqual(pm.path, "%s/%s" % (path_after, pm.container))
+    def test_parsed_data_should_non_empty(self):
+        self.assertTrue(self._cfg.data)

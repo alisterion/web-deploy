@@ -17,12 +17,14 @@
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
+from six import add_metaclass
+
 from .base import LocatedDeployEntity
 
 __author__ = 'y.gavenchuk'
 
-
-class DataBase(LocatedDeployEntity, metaclass=ABCMeta):
+@add_metaclass(ABCMeta)
+class DataBase(LocatedDeployEntity):
     DEFAULT_BACKUP_COUNT = 5
 
     __slots__ = ('_host', '_user', '_port', '_db_name', '_password',

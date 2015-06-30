@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from .base import DeployEntity
+from .daemon import Daemon
 
 
 __author__ = 'y.gavenchuk'
@@ -29,6 +30,12 @@ class System(DeployEntity):
         self._tree = project_tree
         self._log_files = log_files
         self._app_dir = app_dir
+
+        daemon_err_msg = 'Expected instance of "{daemon}". Got "%s"'.format(
+            daemon=Daemon
+        )
+        for d in daemons:
+            assert isinstance(d, Daemon), daemon_err_msg % type(d)
         self._daemons = daemons or []
 
     def _mk_log_dir(self, dir_name):

@@ -14,21 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from unittest import TestCase, mock
-from web_deploy.project import ProjectModule
+from fabric.api import env
+
+from .factory import ProjectFactory
+
+__all__ = ('App', 'deploy')
 
 
-__author__ = 'y.gavenchuk'
-__all__ = ('ProjectModuleTestCase', )
+class App(object):
+    def __init__(self, config_file):
+        self._prj = ProjectFactory(config_file).get()
+
+    def deploy(self, tag):
+        self._prj.update(tag)
 
 
-class ProjectModuleTestCase(TestCase):
-    def test_setup_path(self):
-        path_before = '/a/b/c'
-        path_after = '/e/f/g'
-        git = mock.MagicMock()
-
-        pm = ProjectModule(path_before, git)
-        pm.path = path_after
-
-        self.assertEqual(pm.path, "%s/%s" % (path_after, pm.container))
+def deploy(tag):
+    App(env.wd_settings).deploy(tag)

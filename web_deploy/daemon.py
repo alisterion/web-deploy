@@ -17,13 +17,15 @@
 from abc import ABCMeta, abstractmethod
 
 from fabric import api
+from six import add_metaclass
 
 
 __author__ = 'y.gavenchuk'
 __all__ = ('Daemon', 'SimpleService', 'Nginx', 'Uwsgi', 'Supervisor', )
 
 
-class Daemon(object, metaclass=ABCMeta):
+@add_metaclass(ABCMeta)
+class Daemon(object):
     _name = None
     _api = api
 

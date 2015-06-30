@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebDeploy>
+    <project>
+        <system>
+            <project_tree>
+                <item>/srv/www/web-deploy/public_files</item>
+                <item>/srv/www/web-deploy/dumps</item>
+                <item>/srv/www/web-deploy/www1/data</item>
+                <item>/srv/www/web-deploy/www2/data</item>
+            </project_tree>
+            <app_dir>www/web-deploy</app_dir>
+            <log_files>
+                <item>/var/log/web-deploy/web-deploy.log</item>
+                <item>/var/log/web-deploy/celery/out.log</item>
+            </log_files>
+            <daemons>
+                <daemon name="">Uwsgi</daemon>
+                <daemon name="">Nginx</daemon>
+                <daemon name="">Supervisor</daemon>
+            </daemons>
+        </system>
+        <modules>
+            <module type="DjangoProjectModule">
+                <path>data</path>
+                <git>
+                    <path>data</path>
+                    <name>web-deploy</name>
+                    <url>git@github.com:ygavenchuk/web-deploy.git</url>
+                </git>
+                <virtual_env>
+                    <path>web-deploy</path>
+                    <name>.virtualenv</name>
+                </virtual_env>
+                <db type="Postgres">
+                    <path>web-deploy/dumps</path>
+                    <name>web-deploy-db</name>
+                    <user>web-deploy-user</user>
+                    <password><![CDATA[Gjy16|T7@xv/jz$)P&ta|EQ$Sz]]></password>
+                </db>
+                <python_rq_file>web-deploy/requirements.txt</python_rq_file>
+                <apt_rq_file>web-deploy/apt-requirements.txt</apt_rq_file>
+                <manage_py>web-deploy/manage.py</manage_py>
+                <collect_static>0</collect_static>
+            </module>
+        </modules>
+    </project>
+</WebDeploy>

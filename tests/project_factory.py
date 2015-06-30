@@ -14,21 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from unittest import TestCase, mock
-from web_deploy.project import ProjectModule
+from unittest import TestCase
+
+from test_tools import FixtureManager
+
+from web_deploy.factory import ProjectFactory
+from web_deploy.project import Project
 
 
 __author__ = 'y.gavenchuk'
-__all__ = ('ProjectModuleTestCase', )
+__all__ = ('AppTestCase', )
 
 
-class ProjectModuleTestCase(TestCase):
-    def test_setup_path(self):
-        path_before = '/a/b/c'
-        path_after = '/e/f/g'
-        git = mock.MagicMock()
+class AppTestCase(TestCase):
+    _cfg = FixtureManager.get_fixture_path('config.xml')
 
-        pm = ProjectModule(path_before, git)
-        pm.path = path_after
-
-        self.assertEqual(pm.path, "%s/%s" % (path_after, pm.container))
+    def test_project_factory_should_return_project_instance(self):
+        pf = ProjectFactory(self._cfg).get()
+        self.assertIsInstance(pf, Project)
