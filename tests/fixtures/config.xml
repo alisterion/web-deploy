@@ -10,13 +10,13 @@
             </project_tree>
             <app_dir>www/web-deploy</app_dir>
             <log_files>
-                <item>/var/log/web-deploy/web-deploy.log</item>
+                <item owner="me" group="www-data" mode="0664">/var/log/web-deploy/web-deploy.log</item>
                 <item>/var/log/web-deploy/celery/out.log</item>
             </log_files>
             <daemons>
-                <daemon name="">Uwsgi</daemon>
+                <daemon>Uwsgi</daemon>
                 <daemon name="">Nginx</daemon>
-                <daemon name="">Supervisor</daemon>
+                <daemon name="web-deploy:">Supervisor</daemon>
             </daemons>
         </system>
         <modules>
