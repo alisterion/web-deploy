@@ -1,6 +1,6 @@
 # Web-deploy
 
-A tool to automatic deployment of web projects (e.g. django based)
+An automatic deployment tool for web projects (e.g. django based)
 
 
 ## Usage
@@ -82,17 +82,17 @@ Content of "**fabfile.py**":
 
 ```
 
-Then you may just say in console something like ```fab foo:deployment``` 
+
+Just type in console something like ```fab foo:deployment``` 
 and your prod/test server will be updated to the last version of **deployment** 
-branch/tag. Or if you will say ```fab foo``` your server will be updated to the 
-last revision of current branch. 
+branch/tag. Or if you type ```fab foo```, your server will be updated to the 
+last revision of **current** branch. 
 
-After fetching changes from git will be applied  all migration and restarted all 
-specified daemons (*uwsgi* and *nginx* in example above).
-
+After fetching changes from the git, you will have all migrations applied and
+all of specified daemons restarted (*uwsgi* and *nginx* in example above).
 
 ## Installation notes
-Important! Before install web-deploy package you should manually install fabric for python3.4
+Important! Web-deploy package requires manual installation of fabric for python3.4:
 
 ```
     pip install git+https://github.com/akaariai/fabric.git@py34
