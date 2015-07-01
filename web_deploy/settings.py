@@ -43,8 +43,34 @@ class AbstractSettings(object):
 
 
 class SettingsXML(AbstractSettings):
+    _wired_keys = {'@', '#'}
     _parser = xmltodict
+
+    def _is_key_wired(self, key):
+        return key[0] in self._wired_keys
+
+    @staticmethod
+    def _normalize_key(key):
+        return key[1:]
+
+    def _fix_wired_keys(self, data):
+        if isinstance(data, dict):
+            for k in data.keys():
+                if self._is_key_wired(str(k)):
+                    item = data.pop(k)
+                    data[self._normalize_key(k)] = item
+                else:
+                    item = data[k]
+
+                self._fix_wired_keys(item)
+
+        elif isinstance(data, (list, tuple, set)):
+            for item in data[:]:
+                self._fix_wired_keys(item)
 
     def parse(self):
         with open(self._cfg_file, 'r', encoding='utf-8') as fp:
-            return self._parser.parse(fp.read())['WebDeploy']
+            data = self._parser.parse(fp.read())['WebDeploy']
+            self._fix_wired_keys(data)
+
+            return data

@@ -37,9 +37,16 @@ class AbstractFactory(object):
 
 class DaemonFactory(AbstractFactory):
     def get(self, config):
-        d_class = getattr(daemon, config['#text'].title())
+        if isinstance(config, dict):
+            d_type = config.get('text')
+            name = config.get('name')
+        else:
+            d_type = config
+            name = None
+
+        d_class = getattr(daemon, d_type.title())
         try:
-            return d_class(config['@name'])
+            return d_class(name)
         except TypeError:
             return d_class()
 
@@ -78,8 +85,8 @@ class GitFactory(AbstractFactory):
 class DbFactory(AbstractFactory):
     def get(self, config):
         db_cfg = config.copy()
-        del db_cfg['@type']
-        db_type = getattr(db, config['@type'])
+        del db_cfg['type']
+        db_type = getattr(db, config['type'])
 
         return db_type(**db_cfg)
 
@@ -104,7 +111,7 @@ class ProjectModuleFactory(AbstractFactory):
 
     def get_djangoprojectmodule(self, config):
         cfg_module = config.copy()
-        del cfg_module['@type']
+        del cfg_module['type']
 
         cfg_module['git'] = self._git.get(cfg_module['git'])
         cfg_module['virtual_env'] = self._venv.get(cfg_module['virtual_env'])
@@ -123,7 +130,7 @@ class ProjectModuleFactory(AbstractFactory):
             modules_list = [config['modules']['module']]
 
         for m in modules_list:
-            method = getattr(self, 'get_%s' % m['@type'].lower())
+            method = getattr(self, 'get_%s' % m['type'].lower())
             res.append(method(m))
 
         return res
