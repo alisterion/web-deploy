@@ -132,17 +132,18 @@ class PythonProjectModule(ProjectModule):
 
 
 class DjangoProjectModule(PythonProjectModule):
-    __slots__ = ('_manage_py', '_db', )
+    __slots__ = ('_manage_py', '_db', '_static_dir', )
 
     def __init__(self, path, git, virtual_env, system, python_rq_file,
                  apt_rq_file, db, manage_py, collect_static=True,
-                 container_name=None):
+                 container_name=None, static_dir='static'):
         super(DjangoProjectModule, self).__init__(
             path, git, virtual_env, system, python_rq_file, apt_rq_file,
             container_name
         )
         self._manage_py = manage_py
         self._db = db
+        self._static_dir = static_dir
 
         self._post_update_hooks += [
             self.puh_db_backup,
@@ -165,4 +166,8 @@ class DjangoProjectModule(PythonProjectModule):
         self._v_env.run('"%s" migrate' % self.manage_py)
 
     def puh_collect_static(self):
+        static_path = self._os.path.join(self.path, self._static_dir)
+        if not self._files.exists(static_path):
+            self._api.run('mkdir -p -- "%s"' % static_path)
+
         self._v_env.run('"%s" collectstatic --noinput' % self.manage_py)
