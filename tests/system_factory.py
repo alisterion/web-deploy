@@ -39,8 +39,8 @@ class SystemFactoryTestCase(TestCase):
 
     def test_ensure_log_should_check_if_log_file_exists(self):
         sys_files = mock.MagicMock()
-        target_files = 'web_deploy.system.System._files'
-        target_api = 'web_deploy.system.System._api'
+        target_files = 'web_deploy.system.FileSystemAPI._files'
+        target_api = 'web_deploy.system.FileSystemAPI._api'
         with mock.patch(target_files, sys_files), mock.patch(target_api):
             SystemFactory().get(self._cfg).ensure_log_files()
 
@@ -55,8 +55,8 @@ class SystemFactoryTestCase(TestCase):
     def test_if_log_not_exists_ensure_log_should_create_them(self):
         sys_files = mock.MagicMock(**{'exists.return_value': False})
         sys_api = mock.MagicMock()
-        tg_files = 'web_deploy.system.System._files'
-        tg_api = 'web_deploy.system.System._api'
+        tg_files = 'web_deploy.system.FileSystemAPI._files'
+        tg_api = 'web_deploy.system.FileSystemAPI._api'
         with mock.patch(tg_files, sys_files), mock.patch(tg_api, sys_api):
             SystemFactory().get(self._cfg).ensure_log_files()
 
@@ -65,9 +65,9 @@ class SystemFactoryTestCase(TestCase):
             [
                 mock.call('mkdir -p -- "/var/log/web-deploy"'),
                 mock.call(
-                    'chown -R www-data:www-data -- "/var/log/web-deploy"'
+                    'chown www-data:www-data -- "/var/log/web-deploy"'
                 ),
-                mock.call('chmod -R 755 -- "/var/log/web-deploy"'),
+                mock.call('chmod 755 -- "/var/log/web-deploy"'),
                 mock.call('touch -- "/var/log/web-deploy/web-deploy.log"'),
                 mock.call('chmod 0664 -- "/var/log/web-deploy/web-deploy.log"'),
                 mock.call(
@@ -75,10 +75,10 @@ class SystemFactoryTestCase(TestCase):
                 ),
                 mock.call('mkdir -p -- "/var/log/web-deploy/celery"'),
                 mock.call(
-                    'chown -R www-data:www-data -- '
+                    'chown www-data:www-data -- '
                     '"/var/log/web-deploy/celery"'
                 ),
-                mock.call('chmod -R 755 -- "/var/log/web-deploy/celery"'),
+                mock.call('chmod 755 -- "/var/log/web-deploy/celery"'),
                 mock.call('touch -- "/var/log/web-deploy/celery/out.log"'),
                 mock.call('chmod 0644 -- "/var/log/web-deploy/celery/out.log"'),
                 mock.call(

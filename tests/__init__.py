@@ -18,5 +18,6 @@ from settings import *
 from project_module import *
 from project_factory import *
 from system_factory import *
+from django_pm import *
 
 __author__ = 'y.gavenchuk'

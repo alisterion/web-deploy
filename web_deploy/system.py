@@ -16,7 +16,7 @@
 
 from six import string_types
 
-from .base import DeployEntity
+from .base import DeployEntity, DeployError
 from .daemon import Daemon
 
 
@@ -34,10 +34,67 @@ class FileSystemEntity(object):
     DEFAULT_OWNER = 'www-data'
     DEFAULT_MODE = '0644'
 
-    __slots__ = ('_raw', '_path', '_type', '_owner', '_group', '_mode', )
+    __slots__ = ('_raw', '_path', '_type', '_owner', '_group', '_mode',
+                 '_target', )
+
+    def _validate_symlink_target(self):
+        if self._type == self.TYPE_SYMLINK:
+            err_msg_target = 'There should be not empty target of symlink!'
+            assert self._target is not None, err_msg_target
+        else:
+            self._target = self.path
+
+    @staticmethod
+    def _validate_item(item):
+        err_msg_type = "Should be instance of dict, str or FileSystemEntity!"
+        allowed_types = (string_types, dict, FileSystemEntity)
+        assert isinstance(item, allowed_types), err_msg_type
+
+    def _from_str(self, item, type_, owner, group, mode, target):
+        self._path = item
+        self._type = type_
+        self._owner = owner
+        self._group = group
+        self._mode = mode
+        self._target = target
+
+        self._validate_symlink_target()
+
+    def _from_dict(self, item, type_, owner, group, mode, target):
+        err_path_msg = 'Should be "path" or "text" specified!'
+        assert 'path' in item or 'text' in item, err_path_msg
+
+        self._path = item.get('path') or item.get('text')
+
+        if type_ != self.DEFAULT_TYPE:
+            self._type = type_
+        else:
+            self._type = item.get('type', self.DEFAULT_TYPE)
+
+        if owner != self.DEFAULT_OWNER:
+            self._owner = owner
+        else:
+            self._owner = item.get('owner', self.DEFAULT_OWNER)
+
+        if group != self.DEFAULT_GROUP:
+            self._group = group
+        else:
+            self._group = item.get('group', self.DEFAULT_GROUP)
+
+        if mode != self.DEFAULT_MODE:
+            self._mode = mode
+        else:
+            self._mode = item.get('mode', self.DEFAULT_MODE)
+
+        self._target = item.get('target', target)
+        self._validate_symlink_target()
+
+    def _clone(self, other):
+        for f in self.__slots__:
+            setattr(self, f, getattr(other, f))
 
     def __init__(self, item, type_=DEFAULT_TYPE, owner=DEFAULT_OWNER,
-                 group=DEFAULT_GROUP, mode=DEFAULT_MODE):
+                 group=DEFAULT_GROUP, mode=DEFAULT_MODE, target=None):
         """
 
         :param dict|str item:
@@ -45,41 +102,24 @@ class FileSystemEntity(object):
         :param str owner:
         :param str group:
         :param str mode:
+        :param str target: target of symlink
         """
-        assert isinstance(item, (string_types, dict)), "Should be dict or str!"
+        self._validate_item(item)
+
         self._raw = item
+        self._path = ''
+        self._type = ''
+        self._owner = ''
+        self._group = ''
+        self._mode = ''
+        self._target = ''
 
         if isinstance(item, string_types):
-            self._path = item
-            self._type = type_
-            self._owner = owner
-            self._group = group
-            self._mode = mode
+            self._from_str(item, type_, owner, group, mode, target)
+        elif isinstance(item, dict):
+            self._from_dict(item, type_, owner, group, mode, target)
         else:
-            err_path_msg = 'Should be "path" or "text" specified!'
-            assert 'path' in item or 'text' in item, err_path_msg
-
-            self._path = item.get('path') or item.get('text')
-
-            if type_ != self.DEFAULT_TYPE:
-                self._type = type_
-            else:
-                self._type = item.get('type', self.DEFAULT_TYPE)
-
-            if owner != self.DEFAULT_OWNER:
-                self._owner = owner
-            else:
-                self._owner = item.get('owner', self.DEFAULT_OWNER)
-
-            if group != self.DEFAULT_GROUP:
-                self._group = group
-            else:
-                self._group = item.get('group', self.DEFAULT_GROUP)
-
-            if mode != self.DEFAULT_MODE:
-                self._mode = mode
-            else:
-                self._mode = item.get('mode', self.DEFAULT_MODE)
+            self._clone(item)
 
     def __str__(self):
         return self.path
@@ -104,9 +144,83 @@ class FileSystemEntity(object):
     def mode(self):
         return self._mode
 
+    @property
+    def target(self):
+        return self._target
+
+
+class FileSystemAPI(DeployEntity):
+    def _run(self, cmd, sudo=False):
+        if sudo:
+            return self._api.sudo(cmd)
+
+        return self._api.run(cmd)
+
+    def mkdir(self, item, sudo=False):
+        """
+        :param FileSystemEntity item:
+        :param bool sudo:
+        """
+        fse_item = FileSystemEntity(item)
+        self._run('mkdir -p -- "%s"' % fse_item.path, sudo)
+
+    def chown(self, item):
+        fse_item = FileSystemEntity(item)
+
+        if fse_item.group or fse_item.owner:
+            self._api.sudo('chown {owner}:{group} -- "{path}"'.format(
+                owner=fse_item.owner,
+                group=fse_item.group,
+                path=fse_item.path
+            ))
+
+    def chmod(self, item):
+        fse_item = FileSystemEntity(item)
+        if not fse_item.mode:
+            return
+
+        self._api.sudo('chmod {mode} -- "{path}"'.format(
+            mode=fse_item.mode,
+            path=fse_item.path
+        ))
+
+    def exists(self, item):
+        return self._files.exists(str(item))
+
+    def readlink(self, item):
+        """
+        :param FileSystemEntity|str item:
+
+        :return str:
+        """
+        return self._api.run('readlink -- "{0}"'.format(str(item)))
+
+    def touch(self, item, sudo=False):
+        self._run('touch -- "%s"' % str(item), sudo)
+
+    def mk_symlink(self, item, force=False):
+        fse = FileSystemEntity(item)
+        if fse.type != FileSystemEntity.TYPE_SYMLINK:
+            raise DeployError("Symlink expected!. Got '%s'" % fse.type)
+
+        if fse.path == fse.target:
+            raise DeployError("Source and target are equ`al! '%s'" % str(fse))
+
+        if not self.exists(fse.target) or force:
+            self._api.run('ln -s{force}T -- "{source}" "{target}"'.format(
+                source=fse.path,
+                target=fse.target,
+                force='f' if force else ''
+            ))
+
+    def join_path(self, *paths):
+        return self._os.path.join(
+            *map(lambda x: str(FileSystemEntity(x)), paths)
+        )
+
 
 class System(DeployEntity):
-    __slots__ = ('_tree', '_log_files', '_app_dir', '_daemons', )
+    __slots__ = ('_tree', '_log_files', '_app_dir', '_daemons', '_fs', )
 
     def __init__(self, project_tree, app_dir, log_files, daemons=None):
         super(System, self).__init__()
@@ -121,42 +235,46 @@ class System(DeployEntity):
             assert isinstance(d, Daemon), daemon_err_msg % type(d)
         self._daemons = daemons or []
 
+        self._fs = FileSystemAPI()
+
     def _mk_log_dir(self, dir_item):
-        self._api.sudo('mkdir -p -- "%s"' % dir_item)
-        self._api.sudo('chown -R www-data:www-data -- "%s"' % dir_item)
-        self._api.sudo('chmod -R 755 -- "%s"' % dir_item)
+        fse_dir = FileSystemEntity(
+            dir_item,
+            type_=FileSystemEntity.TYPE_DIRECTORY,
+            owner='www-data',
+            group='www-data',
+            mode='755'
+        )
+        self.fs.mkdir(fse_dir, sudo=True)
+        self.fs.chown(fse_dir)
+        self.fs.chmod(fse_dir)
 
     def _mk_file(self, file_item):
         """
         :param FileSystemEntity file_item:
         """
-        self._api.sudo('touch -- "%s"' % file_item.path)
-
-        if file_item.mode:
-            self._api.sudo('chmod {mode} -- "{path}"'.format(
-                mode=file_item.mode,
-                path=file_item.path
-            ))
-
-        if file_item.group or file_item.owner:
-            self._api.sudo('chown {owner}:{group} -- "{path}"'.format(
-                owner=file_item.owner,
-                group=file_item.group,
-                path=file_item.path
-            ))
+        self.fs.touch(file_item, sudo=True)
+        self.fs.chmod(file_item)
+        self.fs.chown(file_item)
 
     def _mk_log(self, log_file):
         fs_log = FileSystemEntity(log_file)
 
-        if not self._files.exists(fs_log.path):
+        if not self.fs.exists(fs_log.path):
             self._mk_log_dir(self._os.path.dirname(fs_log.path))
             self._mk_file(fs_log)
 
     def _mk_symlink(self, source, target):
-        self._api.run('ln -sfT -- "{source}" "{target}"'.format(
-            source=source,
-            target=target
-        ))
+        fse_item = FileSystemEntity(
+            source,
+            target=target,
+            type_=FileSystemEntity.TYPE_SYMLINK,
+        )
+        self.fs.mk_symlink(fse_item, force=True)
+
+    @property
+    def fs(self):
+        return self._fs
 
     @property
     def app_directory(self):
@@ -164,7 +282,7 @@ class System(DeployEntity):
 
     @property
     def app_directory_active(self):
-        return self._api.run('readlink -- "{0}"'.format(self.app_directory))
+        return self.fs.readlink(self.app_directory)
 
     @property
     def app_directory_inactive(self):
@@ -178,7 +296,7 @@ class System(DeployEntity):
 
     def create_project_tree(self):
         for directory in self._tree:
-            self._api.run('mkdir -p -- "%s"' % directory)
+            self.fs.mkdir(directory)
 
         if not self._files.is_link(self.app_directory):
             self._mk_symlink(self.app_directory + '1', self.app_directory)

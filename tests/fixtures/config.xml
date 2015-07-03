@@ -41,6 +41,8 @@
                 <apt_rq_file>web-deploy/apt-requirements.txt</apt_rq_file>
                 <manage_py>web-deploy/manage.py</manage_py>
                 <collect_static>0</collect_static>
+                <static_dir>web-deploy/static</static_dir>
+                <media_dir type="symlink" target="web-deploy/public">/srv/www/web-deploy/public_files</media_dir>
             </module>
         </modules>
     </project>
