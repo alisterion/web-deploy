@@ -52,6 +52,9 @@ class ProjectModule(LocatedDeployEntity):
     def post_update_hooks(self):
         yield from self._post_update_hooks
 
+    def add_hook(self, *hooks):
+        self._post_update_hooks += hooks
+
     def post_update_hndl(self):
         for hook in self._post_update_hooks:
             hook()

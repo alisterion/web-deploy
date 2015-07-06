@@ -42,7 +42,14 @@
                 <manage_py>web-deploy/manage.py</manage_py>
                 <collect_static>0</collect_static>
                 <static_dir>web-deploy/static</static_dir>
+                <!-- media_dir is deprecated. Use <hook type="create_symlink" /> instead -->
                 <media_dir type="symlink" target="web-deploy/public">/srv/www/web-deploy/public_files</media_dir>
+                <hooks>
+                    <hook type="create_symlink">
+                        <item type="symlink" target="/srv/www/web-deploy/www1/data/web-deploy/public">/srv/www/web-deploy/public_files</item>
+                        <item type="symlink" target="/srv/www/web-deploy/www2/data/web-deploy/public">/srv/www/web-deploy/public_files</item>
+                    </hook>
+                </hooks>
             </module>
         </modules>
     </project>

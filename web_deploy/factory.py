@@ -19,13 +19,18 @@ from abc import ABCMeta, abstractmethod
 from six import add_metaclass
 
 from .system import System
-from . import daemon, db
+from . import daemon, db, post_update_hooks
 from .vcs import Git
 from .python import VirtualEnv, DjangoProjectModule
 from .settings import SettingsXML
 from .project import Project
 
+
 __author__ = 'y.gavenchuk'
+__all__ = (
+    'DaemonFactory', 'SystemFactory', 'GitFactory', 'DbFactory',
+    'VirtualEnvFactory', 'ProjectModuleFactory', 'ProjectFactory',
+)
 
 
 @add_metaclass(ABCMeta)
@@ -96,12 +101,37 @@ class VirtualEnvFactory(AbstractFactory):
         return VirtualEnv(**config)
 
 
+class HooksFactory(AbstractFactory):
+    def get(self, config):
+        hook = getattr(post_update_hooks, config['type'])
+        items = config.get('item')
+
+        return lambda: hook(*items)
+
+
 class ProjectModuleFactory(AbstractFactory):
     @staticmethod
     def _2b(value):
-        return str(value).lower() not in (
+        return str(value).lower() not in {
             '0', 'false', '', 'none', 'null', 'no'
-        )
+        }
+
+    @staticmethod
+    def _get_hooks(cfg):
+        if 'hooks' not in cfg:
+            return []
+
+        hd = cfg.get('hooks', {}) or {}
+        del cfg['hooks']
+
+        hooks = hd.get('hook', [])
+        if not hooks:
+            return []
+
+        hook_factory = HooksFactory()
+
+        hooks_list = hooks if isinstance(hooks, list) else [hooks]
+        return [hook_factory.get(h) for h in hooks_list]
 
     def __init__(self):
         self._sys = SystemFactory()
@@ -119,8 +149,12 @@ class ProjectModuleFactory(AbstractFactory):
         cfg_module['system'] = self._sys.get(config)
 
         cfg_module['collect_static'] = self._2b(cfg_module['collect_static'])
+        hooks = self._get_hooks(cfg_module)
 
-        return DjangoProjectModule(**cfg_module)
+        dj = DjangoProjectModule(**cfg_module)
+        dj.add_hook(*hooks)
+
+        return dj
 
     def get(self, config):
         res = []

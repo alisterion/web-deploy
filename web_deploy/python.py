@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import warnings
+
 from .base import LocatedDeployEntity
 from .project import ProjectModule
 
@@ -165,7 +167,7 @@ class DjangoProjectModule(PythonProjectModule):
         self._db.create_backup()
 
     def puh_migrate(self):
-        self._v_env.run('"%s" migrate' % self.manage_py)
+        self._v_env.run('"%s" migrate --noinput --' % self.manage_py)
 
     def puh_collect_static(self):
         static_path = self._sys.fs.join_path(self.path, self._static_dir)
@@ -176,6 +178,13 @@ class DjangoProjectModule(PythonProjectModule):
 
     def puh_ensure_media_root(self):
         if self._media_dir:
+            warnings.warn(
+                'The "media_dir" option is deprecated. '
+                'Use <hook type="create_symlink" /> instead ',
+                DeprecationWarning,
+                stacklevel=1
+            )
+
             self._media_dir['target'] = self._sys.fs.join_path(
                 self.path, self._media_dir['target']
             )
