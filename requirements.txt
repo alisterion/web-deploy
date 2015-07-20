@@ -1,4 +1,4 @@
 git+https://github.com/akaariai/fabric.git@py34
 xmltodict==0.9.2
-test-tools=0.0.3
+test-tools==0.0.3
 six

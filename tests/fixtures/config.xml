@@ -51,6 +51,15 @@
                     </hook>
                 </hooks>
             </module>
+            <module type="FrontendProjectModule">
+                <path>data</path>
+                <git>
+                    <path>data</path>
+                    <name>digimoto-frontend</name>
+                    <url>git@bitbucket.org:itproject/digimoto-frontend.git</url>
+                </git>
+                <apt_rq_file>digimoto-frontend/apt-requirements.txt</apt_rq_file>
+            </module>
         </modules>
     </project>
 </WebDeploy>

@@ -22,6 +22,7 @@ from .system import System
 from . import daemon, db, post_update_hooks
 from .vcs import Git
 from .python import VirtualEnv, DjangoProjectModule
+from .frontend import FrontendProjectModule
 from .settings import SettingsXML
 from .project import Project
 
@@ -152,6 +153,18 @@ class ProjectModuleFactory(AbstractFactory):
         hooks = self._get_hooks(cfg_module)
 
         dj = DjangoProjectModule(**cfg_module)
+        dj.add_hook(*hooks)
+
+        return dj
+
+    def get_frontendprojectmodule(self, config):
+        cfg_module = config.copy()
+        del cfg_module['type']
+        cfg_module['git'] = self._git.get(cfg_module['git'])
+        cfg_module['system'] = self._sys.get(config)
+        hooks = self._get_hooks(cfg_module)
+
+        dj = FrontendProjectModule(**cfg_module)
         dj.add_hook(*hooks)
 
         return dj
