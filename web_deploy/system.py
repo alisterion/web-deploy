@@ -199,17 +199,22 @@ class FileSystemAPI(DeployEntity):
         self._run('touch -- "%s"' % str(item), sudo)
 
     def mk_symlink(self, item, force=False):
+        import sys
+        sys.stdout.write("START")
         fse = FileSystemEntity(item)
         if fse.type != FileSystemEntity.TYPE_SYMLINK:
+            sys.stdout.write("err 1")
             raise DeployError("Symlink expected!. Got '%s'" % fse.type)
 
         if fse.path == fse.target:
-            raise DeployError("Source and target are equ`al! '%s'" % str(fse))
+            sys.stdout.write("err 2")
+            raise DeployError("Source and target are equal! '%s'" % str(fse))
 
+        sys.stdout.write("-----"+str(self.exists(fse.target)))
         if not self.exists(fse.target) or force:
-            self._api.run('ln -s{force}T -- "{source}" "{target}"'.format(
-                source=fse.path,
-                target=fse.target,
+            self._api.run('ln -s{force}T -- "{source}" "{target}";'.format(
+                source=fse.path.strip(),
+                target=fse.target.strip(),
                 force='f' if force else ''
             ))
 

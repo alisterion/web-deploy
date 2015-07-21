@@ -6,10 +6,10 @@
 from web_deploy.system import FileSystemAPI
 
 __author__ = 'y.gavenchuk'
-__all__ = ('create_symlink', )
+__all__ = ('create_symlink',)
 
 
-def create_symlink(*items):
+def create_symlink(module, *items):
     fsa = FileSystemAPI()
 
     for item in items:

@@ -16,9 +16,8 @@
 
 from .base import LocatedDeployEntity, DeployEntity
 
-
 __author__ = 'y.gavenchuk'
-__all__ = ('Project', 'ProjectModule', )
+__all__ = ('Project', 'ProjectModule',)
 
 
 class ProjectModule(LocatedDeployEntity):
@@ -53,7 +52,15 @@ class ProjectModule(LocatedDeployEntity):
         yield from self._post_update_hooks
 
     def add_hook(self, *hooks):
-        self._post_update_hooks += hooks
+        before_list = []
+        after_list = []
+        for priority, hook in hooks:
+            if priority == 1:
+                before_list.append(hook)
+            else:
+                after_list.append(hook)
+
+        self._post_update_hooks = before_list + self._post_update_hooks + after_list
 
     def post_update_hndl(self):
         for hook in self._post_update_hooks:
@@ -69,8 +76,9 @@ class ProjectModule(LocatedDeployEntity):
         self.git.update(tag)
         self.post_update_hndl()
 
+
 class Project(DeployEntity):
-    __slots__ = ('_p_modules', '_sys', )
+    __slots__ = ('_p_modules', '_sys',)
 
     def __init__(self, system, modules):
         super(Project, self).__init__()

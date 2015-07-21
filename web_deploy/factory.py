@@ -26,7 +26,6 @@ from .frontend import FrontendProjectModule
 from .settings import SettingsXML
 from .project import Project
 
-
 __author__ = 'y.gavenchuk'
 __all__ = (
     'DaemonFactory', 'SystemFactory', 'GitFactory', 'DbFactory',
@@ -103,11 +102,20 @@ class VirtualEnvFactory(AbstractFactory):
 
 
 class HooksFactory(AbstractFactory):
+    PRIORITY_HIGHT = "hight"
+    PRIORITY_LOW = "low"
+
+    PRIORITY = {
+        PRIORITY_HIGHT: 1,
+        PRIORITY_LOW: 0
+    }
+
     def get(self, config):
         hook = getattr(post_update_hooks, config['type'])
+        priority = config.get('priority')
+        normal_priority = self.PRIORITY.get(priority, 0) if priority else 0
         items = config.get('item')
-
-        return lambda: hook(*items)
+        return normal_priority, lambda x: hook(x, *items)
 
 
 class ProjectModuleFactory(AbstractFactory):
