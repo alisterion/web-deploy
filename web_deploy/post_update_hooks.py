@@ -13,4 +13,14 @@ def create_symlink(module, *items):
     fsa = FileSystemAPI()
 
     for item in items:
+        item['target'] = module._sys.fs.join_path(module.path, item['target'])
+        item['text'] = module._sys.fs.join_path(module.path, item['text'])
         fsa.mk_symlink(item)
+
+
+def create_dir(module, *items):
+    fsa = FileSystemAPI()
+
+    for item in items:
+        item['text'] = module._sys.fs.join_path(module.path, item['text'])
+        fsa.mkdir(item)

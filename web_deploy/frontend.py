@@ -19,20 +19,20 @@ class FrontendProjectModule(ProjectModule):
             self.puh_grunt,
         ]
 
-    def puh_grunt(self):
+    def puh_grunt(self, *args, **kwargs):
         with self._api.cd(self._sys.fs.join_path(self.path, self._npm_root)):
             self._api.run("grunt")
 
-    def puh_install_grunt(self):
+    def puh_install_grunt(self, *args, **kwargs):
         with self._api.cd(self._sys.fs.join_path(self.path, self._npm_root)):
             self._api.sudo("npm install -g grunt-cli")
         pass
 
-    def puh_npm_install(self):
+    def puh_npm_install(self, *args, **kwargs):
         with self._api.cd(self._sys.fs.join_path(self.path, self._npm_root)):
             self._api.run("npm install")
 
-    def puh_system(self):
+    def puh_system(self, *args, **kwargs):
         self._sys.install_system_packages(
             self._sys.fs.join_path(self.path, self._apt_rq)
         )

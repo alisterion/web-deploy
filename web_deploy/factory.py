@@ -115,6 +115,7 @@ class HooksFactory(AbstractFactory):
         priority = config.get('priority')
         normal_priority = self.PRIORITY.get(priority, 0) if priority else 0
         items = config.get('item')
+        items = items if isinstance(items,list) else [items, ]
         return normal_priority, lambda x: hook(x, *items)
 
 
@@ -138,8 +139,7 @@ class ProjectModuleFactory(AbstractFactory):
             return []
 
         hook_factory = HooksFactory()
-
-        hooks_list = hooks if isinstance(hooks, list) else [hooks]
+        hooks_list = hooks if isinstance(hooks, list) else [hooks, ]
         return [hook_factory.get(h) for h in hooks_list]
 
     def __init__(self):

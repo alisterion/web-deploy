@@ -122,12 +122,12 @@ class PythonProjectModule(ProjectModule):
 
         self._v_env.path = self.path
 
-    def puh_system(self):
+    def puh_system(self,  *args, **kwargs):
         self._sys.install_system_packages(
             self._sys.fs.join_path(self.path, self._apt_rq)
         )
 
-    def puh_python(self):
+    def puh_python(self,  *args, **kwargs):
         self._v_env.install_packages(
             self._sys.fs.join_path(self.path, self._py_rq)
         )
@@ -160,23 +160,24 @@ class DjangoProjectModule(PythonProjectModule):
             )
 
     @property
-    def manage_py(self):
+    def manage_py(self,  *args, **kwargs):
         return self._sys.fs.join_path(self.path, self._manage_py)
 
-    def puh_db_backup(self):
+    def puh_db_backup(self,  *args, **kwargs):
         self._db.create_backup()
 
-    def puh_migrate(self):
+    def puh_migrate(self,  *args, **kwargs):
         self._v_env.run('"%s" migrate --noinput --' % self.manage_py)
 
-    def puh_collect_static(self):
+    def puh_collect_static(self,  *args, **kwargs):
         static_path = self._sys.fs.join_path(self.path, self._static_dir)
         if not self._sys.fs.exists(static_path):
             self._sys.fs.mkdir(static_path)
 
-        self._v_env.run('"%s" collectstatic --noinput' % self.manage_py)
+        with self._api.cd(self.path):
+            self._v_env.run('"%s" collectstatic --noinput' % self.manage_py)
 
-    def puh_ensure_media_root(self):
+    def puh_ensure_media_root(self,  *args, **kwargs):
         if self._media_dir:
             warnings.warn(
                 'The "media_dir" option is deprecated. '

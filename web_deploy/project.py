@@ -64,7 +64,7 @@ class ProjectModule(LocatedDeployEntity):
 
     def post_update_hndl(self):
         for hook in self._post_update_hooks:
-            hook()
+            hook(self)
 
     def update(self, tag):
         """
