@@ -20,6 +20,7 @@ def create_symlink(module, *items):
 
 def create_dir(module, *items):
     fsa = FileSystemAPI()
+    print("create dir")
 
     for item in items:
         item['text'] = module._sys.fs.join_path(module.path, item['text'])

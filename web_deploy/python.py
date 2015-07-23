@@ -174,7 +174,8 @@ class DjangoProjectModule(PythonProjectModule):
         if not self._sys.fs.exists(static_path):
             self._sys.fs.mkdir(static_path)
 
-        with self._api.cd(self.path):
+        manage_py_path = self._os.path.dirname(self.manage_py)
+        with self._api.cd(manage_py_path):
             self._v_env.run('"%s" collectstatic --noinput' % self.manage_py)
 
     def puh_ensure_media_root(self,  *args, **kwargs):
